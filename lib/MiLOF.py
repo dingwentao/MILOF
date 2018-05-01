@@ -3,7 +3,7 @@
 # https://ieeexplore.ieee.org/document/7530918/
 
 # Inputs:
-	# kpar: numbe of nearest neighbours
+	# kpar: number of nearest neighbours
 	# dimension: dimension of data points
 	# buck: bucket size (memory limit)
 	# filepath: path of input data file
