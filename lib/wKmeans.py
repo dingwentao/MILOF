@@ -350,22 +350,24 @@ class WKMeans():
             self._reevaluate_centers()
             self.runs += 1
 
-        print(Style.BRIGHT + '\nThe End!' + Style.RESET_ALL)
-        print('\tLabel: ' + Style.BRIGHT + self.label + Style.RESET_ALL)
-        print('\tTotal runs:' + Style.BRIGHT, self.runs, Style.RESET_ALL)
-        print('\tNumber of unique items per cluster: ' + Style.BRIGHT, end='')
-        print([len(x) for x in self.clusters], end='')
-        print(Style.RESET_ALL)
-        print('\tNumber of items per cluster: ' + Style.BRIGHT,  end='')
-        for i, c in enumerate(self.counts_per_cluster):
-            if i == 0:
-                print('[', end='')
-            print('%1.1f' % c, end='')
-            if i == len(self.counts_per_cluster) - 1:
-                print(']', end='')
-            else:
-                print(', ', end='')
-        print(Style.RESET_ALL)
+        
+        if self.verbose:
+            print(Style.BRIGHT + '\nThe End!' + Style.RESET_ALL)
+            print('\tLabel: ' + Style.BRIGHT + self.label + Style.RESET_ALL)
+            print('\tTotal runs:' + Style.BRIGHT, self.runs, Style.RESET_ALL)
+            print('\tNumber of unique items per cluster: ' + Style.BRIGHT, end='')
+            print([len(x) for x in self.clusters], end='')
+            print(Style.RESET_ALL)
+            print('\tNumber of items per cluster: ' + Style.BRIGHT,  end='')
+            for i, c in enumerate(self.counts_per_cluster):
+                if i == 0:
+                    print('[', end='')
+                print('%1.1f' % c, end='')
+                if i == len(self.counts_per_cluster) - 1:
+                    print(']', end='')
+                else:
+                    print(', ', end='')
+            print(Style.RESET_ALL)
 
 
 class KPlusPlus(WKMeans):

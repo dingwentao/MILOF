@@ -32,7 +32,7 @@ class Point:
 class Cluster:
 	def __init__(self):
 		self.center = []
-		self.LS = []
+		# self.LS = []
 
 def LOF(datastream, kpar):
 	#not sure to use euclidean or minkowski
@@ -78,17 +78,17 @@ def IncrementalLOF_Fixed(Points, datastream, PointsC, Clusters, kpar, buck, widt
 	dist = []
 	for j in range(0, len(Clusters.center)):
 		distCI = ComputeDist(Clusters.center[j], datastream[i-1, :]) - width;
-		if distCI <=0:
-			distCI=PointsC.kdist[j]
+		# if distCI <=0:
+		# 	distCI=PointsC.kdist[j]
 		dist = dist + [distCI]
 	# print("dist = ", dist)
 
-	if (len(dist)):
-		minval, ind =  min((dist[j], j) for j in range(len(dist)))
+	if len(dist):
+		minval, ind =  min((dist[j], j) for j in range(0, len(dist)))
 		for j in range(0, len(Points.kdist[i-1])):
 			if minval < Points.kdist[i-1][j]:
 				Points.kdist[i-1][j] = minval
-				Points.knn[j] = buck+ind
+				Points.knn[i-1][j] = buck + ind
 				if j < len(Points.kdist[i-1])-1:
 					Points.kdist[i-1][j+1:] = [minval] * (len(Points.kdist[i-1]) - j - 1)
 					Points.knn[i-1][j+1:] = [buck+ind] * (len(Points.kdist[i-1]) - j - 1)
@@ -108,12 +108,14 @@ def IncrementalLOF_Fixed(Points, datastream, PointsC, Clusters, kpar, buck, widt
 						Points.knn[k]   = Points.knn[k][0:kk] + [i-1] + Points.knn[k][kk:]
 						Points.kdist[k] = Points.kdist[k][0:kk]+ [distance] + Points.kdist[k][kk:]
 					break
+
 			for kk in range(kpar, len(Points.knn[k])):
 				# print(Points.kdist[k][kk], Points.kdist[k][kpar-1])
 				if Points.kdist[k][kk] != Points.kdist[k][kpar-1]:
 					del Points.kdist[k][kk:]
 					del Points.knn[k][kk:] 
 					break
+
 			rNN = rNN + [k]
 	# print("rNN = ", rNN)
 	# print("Points.kdist = ", Points.kdist)
@@ -132,9 +134,9 @@ def IncrementalLOF_Fixed(Points, datastream, PointsC, Clusters, kpar, buck, widt
 	rdist = 0
 	for p in Points.knn[i-1]:
 		if p > buck-1:
-			rdist = rdist + max(ComputeDist(datastream[i-1:], Clusters.center[p-buck])-width, PointsC.kdist[p-buck][-1])
+			rdist = rdist + max(ComputeDist(datastream[i-1, :], Clusters.center[p-buck]) - width, PointsC.kdist[p-buck])
 		else:
-			rdist = rdist + max(ComputeDist(datastream[i-1:], datastream[p,:]), Points.kdist[p][-1])
+			rdist = rdist + max(ComputeDist(datastream[i-1, :], datastream[p,:]), Points.kdist[p][-1])
 	Points.lrd = Points.lrd + [1/(rdist/len(Points.knn[i-1]))]
 	# print("Points.lrd = ", Points.lrd)
 
@@ -145,7 +147,7 @@ def IncrementalLOF_Fixed(Points, datastream, PointsC, Clusters, kpar, buck, widt
 			rdist = 0
 			for p in Points.knn[m]:
 				if p > buck-1:
-					rdist = rdist + max(ComputeDist(datastream[m, :], Clusters.center[p-buck])-width, PointsC.kdist[p-buck][-1])
+					rdist = rdist + max(ComputeDist(datastream[m, :], Clusters.center[p-buck])-width, PointsC.kdist[p-buck])
 				else:
 					rdist = rdist + max(ComputeDist(datastream[m, :], datastream[p, :]), Points.kdist[p][-1])
 			Points.lrd[m] = 1/(rdist/len(Points.knn[m]))
@@ -181,7 +183,7 @@ def IncrementalLOF_Fixed(Points, datastream, PointsC, Clusters, kpar, buck, widt
 		Points.LOF = Points.LOF + [lof/len(Points.knn[i-1])]
 	else:
 		Points.LOF[i-1] = lof/len(Points.knn[i-1])
-	# print("Points.kdist =", Points.kdist)
+
 	# print("Points.knn =", Points.knn)
 	# print("Points.LOF =", Points.LOF)
 	# print("Points.lrd =", Points.lrd)
@@ -194,6 +196,7 @@ def IncrementalLOF_Fixed(Points, datastream, PointsC, Clusters, kpar, buck, widt
 def MILOF_Kmeans_Merge(kpar, dimension, buck, filepath, num_k, width):
 	datastream = sio.loadmat(filepath)
 	datastream = np.array(datastream['DataStream'])
+	datastream = datastream[0:2*buck, :]
 	datastream = datastream[:, 0:dimension]
 	datastream = np.unique(datastream, axis=0)
 
@@ -202,7 +205,7 @@ def MILOF_Kmeans_Merge(kpar, dimension, buck, filepath, num_k, width):
 	datastream = scaler.transform(datastream)
 	PointNum = datastream.shape[0]
 	print ("number of data points =", PointNum)
-	print ("normalized data = ", datastream)
+	# print ("normalized data = ", datastream)
 
 	hbuck = int(buck/2) # half of buck
 	kdist = []
@@ -212,16 +215,23 @@ def MILOF_Kmeans_Merge(kpar, dimension, buck, filepath, num_k, width):
 	PointsC= Point()
 	Points = LOF(datastream[0:kpar+1, :], kpar)
 	Scores = Scores + Points.LOF
-	kdist = np.array(Points.kdist)[0:kpar+1,:][:,-1].tolist()
+
+	for i in range(0, kpar+1):
+		kdist = kdist + [Points.kdist[i][-1]]
 
 	print("Scores =", Scores)	
-	print("kdist =", kdist)
+	# print("kdist =", kdist)
 
 	# using direct Incremental LOF for the first bucket/2
 	for i in range(kpar+2, hbuck+1):
 		Points = IncrementalLOF_Fixed(Points, datastream[0:i, :], PointsC, Clusters, kpar, buck, width)
 		Scores = Scores + [Points.LOF[i-1]]
 		kdist  = kdist + [Points.kdist[i-1][-1]]
+
+	# print("Points.kdist =", Points.kdist)
+	# print("Points.knn =", Points.knn)
+	# print("Points.LOF =", Points.LOF)
+	# print("Points.lrd =", Points.lrd)
 	# print("Scores =", Scores)	
 	# print("kdist =", kdist)
 
@@ -229,29 +239,44 @@ def MILOF_Kmeans_Merge(kpar, dimension, buck, filepath, num_k, width):
 	step = 0
 	while not exit:
 		for i in range(hbuck+1, buck+1):
-			if (i > PointNum):
+			if i > datastream.shape[0]:
 				exit = True
 				break
 			Points = IncrementalLOF_Fixed(Points, datastream[0:i, :], PointsC, Clusters, kpar, buck, width)
 			Scores = Scores + [Points.LOF[i-1]]
 			kdist  = kdist + [Points.kdist[i-1][-1]]
-		# print("Scores =", Scores)
+
+		print("Scores =", Scores)
 		# print("kdist =", kdist)
+		# print("Points.kdist =", Points.kdist)
+		# print("Points.knn =", Points.knn)
+		# print("Points.LOF =", Points.LOF)
+		# print("Points.lrd =", Points.lrd)
 
 		if not exit:
 			step = step + 1
+
+			print("******************* Step", step, "*******************")
+
 			indexNormal = list(range(0, hbuck))
 			kmeans = KMeans(n_clusters=num_k, init='k-means++', max_iter=100, n_jobs=-1)  # Considering precompute_distances for faster but more memory
-			kmeans.fit(datastream[indexNormal, :]) # need to check how to configure to match result of matlab code 
+			kmeans.fit(datastream[0:hbuck, :]) # need to check how to configure to match result of matlab code 
 			center = kmeans.cluster_centers_
 			clusterindex = kmeans.labels_
+
 			# print("label =", clusterindex)
 			# print("center =", center)
+
 			remClustLbl = list(range(0, num_k))
-			lof_scores = np.array(Points.kdist)[0:hbuck,:][:,-1]
+			lof_scores = []
+			for itr in range(0, hbuck):
+				lof_scores = lof_scores + [Points.kdist[itr][-1]]
+			lof_scores = np.array(lof_scores)
 			lof_threshold = np.mean(lof_scores) + 3 * np.std(lof_scores) # Not sure if calcuating for each i is necessary
+
 			# print("lof_scores=", lof_scores)
-			# print("lof_threshold=", lof_threshold)
+			print("lof_threshold=", lof_threshold)
+
 			for kk in range(0, num_k):
 				clusterMembers = np.where(clusterindex==kk)
 				clusterMembersList = np.asarray(clusterMembers).flatten().tolist()
@@ -260,12 +285,12 @@ def MILOF_Kmeans_Merge(kpar, dimension, buck, filepath, num_k, width):
 					remClustLbl = setdiff(remClustLbl, [kk])
 			clusterindex = clusterindex[indexNormal]
 			center = center[remClustLbl,:]
-			print("center = ", center)
-			# print("lable = ", clusterindex)
+			
+			# print("center = ", center)
+			# print("label = ", clusterindex)
 		
 			# make summerization of clusters
 			for j in range(0, len(remClustLbl)):
-				# PointsC.rdist = PointsC.rdist + []
 				num = np.sum(clusterindex == remClustLbl[j])
 				PointsC.knn = PointsC.knn + [num]
 				Ckdist = Clrd = CLOF = 0
@@ -278,9 +303,9 @@ def MILOF_Kmeans_Merge(kpar, dimension, buck, filepath, num_k, width):
 				PointsC.lrd   = PointsC.lrd   + [Clrd/num]
 				PointsC.LOF   = PointsC.LOF   + [CLOF/num]
 
-				# print(PointsC.kdist)
-				# print(PointsC.lrd)
-				# print(PointsC.LOF)
+			# print(PointsC.kdist)
+			# print(PointsC.lrd)
+			# print(PointsC.LOF)
 
 			datastream = np.delete(datastream, range(0,hbuck), axis=0)
 			del Points.kdist[0:hbuck]
@@ -288,20 +313,22 @@ def MILOF_Kmeans_Merge(kpar, dimension, buck, filepath, num_k, width):
 			del Points.lrd[0:hbuck]
 			del Points.LOF[0:hbuck]
 
+			# print ("remaining data = ", datastream)
+
 			# Merge clusterings and PointsC
-			initialClusters = len(Clusters.center) # need to double check the correctness
-			if len(Clusters.center) > 0:
+			initialClusters = len(Clusters.center)
+			if initialClusters > 0:
 				old_center = np.array(Clusters.center)
 				cluster_num = max(old_center.shape[0], center.shape[0])
 				initial_center = []
-				if center_num == center.shape[0]:
+				if cluster_num == center.shape[0]:
 					for x in center.tolist():
 						initial_center.append(np.array(x))
 				else:
 					for x in old_center.tolist():
 						initial_center.append(np.array(x))
 
-				wkmeans = wkm.KPlusPlus(cluster_num, X=np.concatenate((old_center, center), axis=0), c=PointsC.knn[0, old_center.shape[0]+center.shape[0]], max_runs=5, verbose=False, mu=initial_center)
+				wkmeans = wkm.KPlusPlus(cluster_num, X=np.concatenate((old_center, center), axis=0), c=PointsC.knn[0:old_center.shape[0]+center.shape[0]], max_runs=5, verbose=False, mu=initial_center)
 				wkmeans.find_centers(method='++')
 				merge_center = np.array(wkmeans.mu)
 				mergedindex = wkmeans.cluster_indices
@@ -311,30 +338,32 @@ def MILOF_Kmeans_Merge(kpar, dimension, buck, filepath, num_k, width):
 				PC = Point()
 				for j in range(0, cluster_num):
 					num = np.sum(mergedindex==j)
-					PC.kdist.append(0)
-					PC.knn.append(0)
-					PC.lrd.append(0)
-					PC.LOF.append(0)
+					PCknn = PCkdist = PClrd = PCLOF = 0
 					for k in np.asarray(np.where(mergedindex==j)).flatten().tolist():
-						PC.knn[j]   = PC.knn[j] + PointsC.knn[k]
-						PC.kdist[j] = PC.kdist[j] + PointsC.knn[k] * PointsC.kdist[k]
-						PC.lrd[j]   = PC.lrd[j] + PointsC.knn[k] * PointsC.lrd[k]
-						PC.LOF[j]   = PC.LOF + PointsC.knn[k] * PointsC.LOF[k]
-					PC.kdist[j] = PC.kdist[j] / PC[j].knn
-					PC.lrd[j]   = PC.lrd[j] / PC[j].knn
-					PC.LOF[j]   = PC.LOF[j] / PC[j].knn
+						PCknn   = PCknn   + PointsC.knn[k]
+						PCkdist = PCkdist + PointsC.knn[k] * PointsC.kdist[k]
+						PClrd   = PClrd   + PointsC.knn[k] * PointsC.lrd[k]
+						PCLOF   = PCLOF   + PointsC.knn[k] * PointsC.LOF[k]
+					
+					PC.knn   = PC.knn + [PCknn]
+					PC.kdist = PC.knn + [PCkdist / PCknn]
+					PC.lrd   = PC.knn + [PClrd / PCknn]
+					PC.LOF   = PC.knn + [PCLOF / PCknn]
 				PointsC = PC
+				
 				# update Clusters
-				Cluster.center = merge_center.tolist()
+				Clusters.center = merge_center.tolist()
 			else:
-				Cluster.center = center.tolist()
+				Clusters.center = center.tolist()
+
+			# print ("Clusters.center = ", Clusters.center)
 
 			# update the Points (knn) as old datastream is deleted
 			for j in range(0, len(Points.knn)):
 				for k in range(0, len(Points.knn[j])):
 					if Points.knn[j][k] >= hbuck:
 						if Points.knn[j][k] < buck:
-							Points.knn[j][k] = Points[j][k] - hbuck
+							Points.knn[j][k] = Points.knn[j][k] - hbuck
 						else:
 							Points.knn[j][k] = mergedindex[Points.knn[j][k]-buck] + buck
 					else:
@@ -344,14 +373,15 @@ def MILOF_Kmeans_Merge(kpar, dimension, buck, filepath, num_k, width):
 							cLabel = clusterindex[indarr]
 							ci = np.asarray(np.where(np.array(remClustLbl)==cLabel)).flatten().tolist()[0]
 							if not initialClusters:
-								Points[j][k] = ci + buck
+								Points.knn[j][k] = ci + buck
 							else:
-								Points[j][k] = mergedindex[ci+initialClusters] + buck
+								Points.knn[j][k] = mergedindex[ci+initialClusters] + buck
 						else:
 							mindist = []
 							for kk in range(0, len(Clusters.center)):
 								mindist = mindist + [ComputeDist(datastream[j,:], Clusters.center[kk])]
-							mindistVal, ci =  min((mindist[x], x) for x in range(len(mindist)))
-							Points[j][k] = ci + buck
-		
-			exit = True
+							mindistVal, ci =  min((mindist[x], x) for x in range(0, len(mindist)))
+							Points.knn[j][k] = ci + buck
+
+			# print("Points.knn = ", Points.knn)
+
