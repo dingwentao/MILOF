@@ -196,7 +196,7 @@ def IncrementalLOF_Fixed(Points, datastream, PointsC, Clusters, kpar, buck, widt
 def MILOF_Kmeans_Merge(kpar, dimension, buck, filepath, num_k, width):
 	datastream = sio.loadmat(filepath)
 	datastream = np.array(datastream['DataStream'])
-	datastream = datastream[0:2*buck, :]
+	datastream = datastream[0:10*buck, :]
 	datastream = datastream[:, 0:dimension]
 	datastream = np.unique(datastream, axis=0)
 
@@ -328,10 +328,17 @@ def MILOF_Kmeans_Merge(kpar, dimension, buck, filepath, num_k, width):
 					for x in old_center.tolist():
 						initial_center.append(np.array(x))
 
+				# print("old_center = ", old_center)
+				# print("center = ", center)
+				# print("weights = ", PointsC.knn[0:old_center.shape[0]+center.shape[0]])
+
 				wkmeans = wkm.KPlusPlus(cluster_num, X=np.concatenate((old_center, center), axis=0), c=PointsC.knn[0:old_center.shape[0]+center.shape[0]], max_runs=5, verbose=False, mu=initial_center)
 				wkmeans.find_centers(method='++')
+				# strmkmeans = skm.StrmKMmeans(x=np.concatenate((old_center, center), axis=0), Centroids=initial_center, Assign=PointsC.knn[0:old_center.shape[0]+center.shape[0]], )
+
 				merge_center = np.array(wkmeans.mu)
 				mergedindex = wkmeans.cluster_indices
+				cluster_num = len(merge_center)
 				clusterLog = clusterLog + [cluster_num]
 
 				# update PointsC by using extra parameter PC

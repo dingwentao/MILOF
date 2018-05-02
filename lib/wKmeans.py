@@ -221,8 +221,14 @@ class WKMeans():
             self.cluster_indices[index] = bestmukey
 
         # Update the clusters.
+        clusters = [c for c in clusters if len(c)]
+        scaling_factor = np.asarray([self.scaling_factor[i] for i in range(self.K) if counts_per_cluster[i]])
+        counts_per_cluster = [num for num in counts_per_cluster if num]  
         self.clusters = clusters
+        self.scaling_factor = scaling_factor
         self.counts_per_cluster = counts_per_cluster
+        self.K = len(self.clusters)
+
         if self.verbose:
             print('\tNumber of unique items per cluster: ' + Style.BRIGHT,
                   end='')
@@ -260,8 +266,7 @@ class WKMeans():
         # assert np.around(np.sum(scaling_factor)) == 1
 
         # Now we want to employ time-averaging on the scaling factor.
-        scaling_factor = (1 - self.beta) * scaling_factor +\
-                         (self.beta) * self.scaling_factor
+        scaling_factor = (1 - self.beta) * scaling_factor + (self.beta) * self.scaling_factor
 
         # Update the scaling factors for the next time step.
         self.scaling_factor = scaling_factor
@@ -283,12 +288,13 @@ class WKMeans():
             print(Style.RESET_ALL)
 
     def _reevaluate_centers(self):
-        """Update the controids (aka mu) per cluster."""
+        """Update the controids (aka mu) per cluster."""    
         new_mu = []
         for k in self.clusters:
             # For each key, add a new centroid (mu) by calculating the cluster
             # mean.
             new_mu.append(np.mean(k, axis=0))
+
         # Update the list of centroids that we just calculated.
         self.mu = new_mu
 
@@ -298,7 +304,7 @@ class WKMeans():
         a fixed constant.
         """
         diff = 1000
-        if self.clusters:
+        if self.clusters:            
             for clu in self.clusters:
                 # For each clusters, check the length. If zero, we have a
                 # problem, we have lost clusters.
