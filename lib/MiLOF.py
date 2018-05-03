@@ -66,7 +66,7 @@ def IncrementalLOF_Fixed(Points, datastream, PointsC, Clusters, kpar, buck, widt
 	i = datastream.shape[0]
 	# print("******************* Processing Data Point", i-1, "*******************")
 	
-	nbrs = NearestNeighbors(n_neighbors=kpar, algorithm='kd_tree', leaf_size=50, metric='euclidean', n_jobs=-1)
+	nbrs = NearestNeighbors(n_neighbors=kpar, algorithm='brute', metric='euclidean')
 	nbrs.fit(datastream[0:i-1, :])
 	dist, ind = nbrs.kneighbors(datastream[i-1, :].reshape(1, -1))
 	Points.kdist = Points.kdist + dist.tolist()
@@ -196,6 +196,7 @@ def IncrementalLOF_Fixed(Points, datastream, PointsC, Clusters, kpar, buck, widt
 def MILOF_Kmeans_Merge(kpar, dimension, buck, filepath, num_k, width):
 	datastream = sio.loadmat(filepath)
 	datastream = np.array(datastream['DataStream'])
+	# datastream = datastream[0:10*buck, :]
 	datastream = datastream[:, 0:dimension]
 	datastream = np.unique(datastream, axis=0)
 
@@ -245,7 +246,7 @@ def MILOF_Kmeans_Merge(kpar, dimension, buck, filepath, num_k, width):
 			Scores = Scores + [Points.LOF[i-1]]
 			kdist  = kdist + [Points.kdist[i-1][-1]]
 
-		print("Scores =", Scores)
+		# print("Scores =", Scores)
 		# print("kdist =", kdist)
 		# print("Points.kdist =", Points.kdist)
 		# print("Points.knn =", Points.knn)
@@ -255,7 +256,7 @@ def MILOF_Kmeans_Merge(kpar, dimension, buck, filepath, num_k, width):
 		if not exit:
 			step = step + 1
 
-			print("******************* Step", step, "*******************")
+			print("*******************Step", step, ": processing data points", step*hbuck, "to", (step+1)*hbuck, "*******************")
 
 			indexNormal = list(range(0, hbuck))
 			kmeans = KMeans(n_clusters=num_k, init='k-means++', max_iter=100, n_jobs=-1)  # Considering precompute_distances for faster but more memory
@@ -274,7 +275,7 @@ def MILOF_Kmeans_Merge(kpar, dimension, buck, filepath, num_k, width):
 			lof_threshold = np.mean(lof_scores) + 3 * np.std(lof_scores) # Not sure if calcuating for each i is necessary
 
 			# print("lof_scores=", lof_scores)
-			print("lof_threshold=", lof_threshold)
+			# print("lof_threshold=", lof_threshold)
 
 			for kk in range(0, num_k):
 				clusterMembers = np.where(clusterindex==kk)
@@ -390,4 +391,4 @@ def MILOF_Kmeans_Merge(kpar, dimension, buck, filepath, num_k, width):
 							Points.knn[j][k] = ci + buck
 
 			# print("Points.knn = ", Points.knn)
-
+	print("Scores =", Scores)
