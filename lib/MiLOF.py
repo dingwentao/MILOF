@@ -196,7 +196,6 @@ def IncrementalLOF_Fixed(Points, datastream, PointsC, Clusters, kpar, buck, widt
 def MILOF_Kmeans_Merge(kpar, dimension, buck, filepath, num_k, width):
 	datastream = sio.loadmat(filepath)
 	datastream = np.array(datastream['DataStream'])
-	datastream = datastream[0:10*buck, :]
 	datastream = datastream[:, 0:dimension]
 	datastream = np.unique(datastream, axis=0)
 
