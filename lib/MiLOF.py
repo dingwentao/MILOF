@@ -37,7 +37,7 @@ class Cluster:
 def LOF(datastream, kpar):
 	#not sure to use euclidean or minkowski
 	Points = Point()
-	clf = LocalOutlierFactor(n_neighbors=kpar, algorithm="kd_tree", leaf_size=30, metric='euclidean', n_jobs=-1)
+	clf = LocalOutlierFactor(n_neighbors=kpar, algorithm="kd_tree", leaf_size=30, metric='euclidean')
 	clf.fit(datastream)
 	Points.LOF = [-x for x in clf.negative_outlier_factor_.tolist()]
 	Points.lrd = clf._lrd.tolist()
