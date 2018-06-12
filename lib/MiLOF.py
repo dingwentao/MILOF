@@ -14,6 +14,7 @@
 
 import numpy as np
 import scipy.io as sio
+import configparser
 import wKmeans as wkm
 import strmKMeans as skm
 from sklearn.preprocessing import MinMaxScaler
@@ -193,7 +194,17 @@ def IncrementalLOF_Fixed(Points, datastream, PointsC, Clusters, kpar, buck, widt
 	
 	return Points
 
-def MILOF_Kmeans_Merge(kpar, dimension, buck, filepath, num_k, width):
+def MILOF(configFile):
+	# read parameters from configuration file
+	config = configparser.ConfigParser()
+	config.read(configFile)
+	filepath = config['Analyzer']['InputMatFile']
+	dimension = int(config['Analyzer']['Dimension'])
+	num_k = int(config['Analyzer']['NumK'])
+	kpar = int(config['Analyzer']['KPar'])
+	buck = int(config['Analyzer']['Bucket'])
+	width = int(config['Analyzer']['Width'])
+
 	datastream = sio.loadmat(filepath)
 	datastream = np.array(datastream['DataStream'])
 	# datastream = datastream[0:10*buck, :]
